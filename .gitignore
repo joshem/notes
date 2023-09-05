@@ -1,0 +1,12 @@
+# Go related
+*.exe
+*.dll
+*.so
+*.dylib
+.idea/
+
+
+# Build artifacts
+/bin/
+/vendor/
+/node_modules/
