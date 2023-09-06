@@ -1,17 +1,18 @@
 package routes
 
 import (
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
+// User defines a user who may write a Note to the system.
 type User struct {
 	ID       string `json:"id" gorm:"primary_key"`
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
+// Register adds a User to the system.
 func (h *Handler) Register(c *gin.Context) {
 	var newUser User
 	if err := c.ShouldBindJSON(newUser); err != nil {
@@ -24,6 +25,7 @@ func (h *Handler) Register(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "User registration successful"})
 }
 
+// Login will initialize a session for the User, providing them with a token.
 func (h *Handler) Login(c *gin.Context) {
 	var input, user User
 	if err := c.ShouldBindJSON(input); err != nil {
@@ -40,13 +42,4 @@ func (h *Handler) Login(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"token": token})
-}
-
-func (h *Handler) generateJwtToken(user User) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
-		"sub": user.ID,
-		"iss": "insert", // todo: specify user
-	})
-
-	return token.SignedString(h.privateKey)
 }

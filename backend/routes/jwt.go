@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Auth is middleware which assigns a JWT.
 func (h *Handler) Auth() gin.HandlerFunc {
 	return func(context *gin.Context) {
 		tokenStr := context.GetHeader("Auth")
@@ -20,6 +21,15 @@ func (h *Handler) Auth() gin.HandlerFunc {
 
 		context.Next()
 	}
+}
+
+func (h *Handler) generateJwtToken(user User) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
+		"sub": user.ID,
+		"iss": "insert", // todo: specify user
+	})
+
+	return token.SignedString(h.privateKey)
 }
 
 func getUserIdFromToken(g *gin.Context) (uint, error) {

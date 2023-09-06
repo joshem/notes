@@ -2,11 +2,11 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"net/http"
 	"time"
 )
 
+// Note is the note structure that the user will write to the system.
 type Note struct {
 	Content   string    `json:"content" gorm:"primary_key"`
 	ID        uint      `json:"id"`
@@ -16,21 +16,13 @@ type Note struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-type Handler struct {
-	db         *gorm.DB
-	privateKey []byte
-}
-
-func NewHandler() *Handler {
-	return &Handler{
-		db:         nil,
-		privateKey: nil,
-	}
-}
-
+// Create is the API endpoint to create a new note.
+//
+// Returns:
+//  - JSOn format of the Note.
 func (h *Handler) Create(g *gin.Context) {
-	var NewNote Note
-	if err := g.ShouldBindJSON(&NewNote); err != nil {
+	var newNote Note
+	if err := g.ShouldBindJSON(&newNote); err != nil {
 		g.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -39,14 +31,19 @@ func (h *Handler) Create(g *gin.Context) {
 	if err != nil {
 		g.JSON(http.StatusBadRequest, gin.H{"error": "failed to parse token"})
 	}
-	NewNote.UserID = userId
+	newNote.UserID = userId
 
-	g.JSON(http.StatusOK, NewNote)
+	g.JSON(http.StatusOK, newNote)
 
-	h.db.Create(NewNote)
+	h.db.Create(newNote)
 
 }
 
+// Update is the endpoint to update the existing Note belonging to the User.
+//
+// Returns:
+//  - JSON of updated Note.
+//  - error if no Note exists for this User.
 func (h *Handler) Update(g *gin.Context) {
 	noteId := g.Param("id")
 	userId, err := getUserIdFromToken(g)
@@ -84,6 +81,11 @@ func (h *Handler) Update(g *gin.Context) {
 	g.JSON(http.StatusOK, note)
 }
 
+// Delete will remove the Note belonging to this User from storage.
+//
+// Returns:
+//  - An http.StatusOK.
+//  - An error if no Note belongs to this User.
 func (h *Handler) Delete(g *gin.Context) {
 	noteId := g.Param("id")
 	userId, err := getUserIdFromToken(g)
