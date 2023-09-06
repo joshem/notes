@@ -1,15 +1,15 @@
-package users
+package handlers
 
 import (
-	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"net/http"
 )
 
-type Handler struct {
-	db         *gorm.DB
-	privateKey string // todo: parse private key
+type User struct {
+	ID       string `json:"id" gorm:"primary_key"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 func (h *Handler) Register(c *gin.Context) {
