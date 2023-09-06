@@ -1,4 +1,4 @@
-package handlers
+package routes
 
 import (
 	"github.com/gin-gonic/gin"
@@ -19,6 +19,13 @@ type Note struct {
 type Handler struct {
 	db         *gorm.DB
 	privateKey []byte
+}
+
+func NewHandler() *Handler {
+	return &Handler{
+		db:         nil,
+		privateKey: nil,
+	}
 }
 
 func (h *Handler) Create(g *gin.Context) {
