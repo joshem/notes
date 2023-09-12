@@ -12,6 +12,8 @@ func main() {
 
 	// Define your routes here
 	SetNoteRoutes(router, handler)
+	SetAuthRoutes(router, handler)
+	SetTagRoutes(router, handler)
 
 	err := router.Run(":8080") // Run the server on port 8080}
 	if err != nil {
@@ -19,11 +21,19 @@ func main() {
 	}
 }
 
+func SetTagRoutes(router *gin.Engine, handler *routes.Handler) {
+	tags := router.Group("/api/tag")
+	tags.POST("/", handler.CreateTag)
+	tags.PUT("/:id", handler.UpdateTag)
+	tags.DELETE("/:id", handler.DeleteTag)
+
+}
+
 func SetNoteRoutes(router *gin.Engine, handler *routes.Handler) {
 	notes := router.Group("/api/notes")
-	notes.POST("/", handler.Create)
-	notes.POST("/", handler.Create)
-	notes.DELETE("/:id", handler.Delete)
+	notes.POST("/", handler.CreateNote)
+	notes.POST("/", handler.CreateNote)
+	notes.DELETE("/:id", handler.DeleteNote)
 }
 
 func SetAuthRoutes(router *gin.Engine, handler *routes.Handler) {
