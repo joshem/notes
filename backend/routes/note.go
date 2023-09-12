@@ -4,7 +4,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"notes/backend/models"
-	"time"
 )
 
 // CreateNote is the API endpoint to create a new note.
@@ -24,9 +23,12 @@ func (h *Handler) CreateNote(g *gin.Context) {
 	}
 	newNote.UserID = userId
 
-	g.JSON(http.StatusOK, newNote)
+	if err := h.db.AddNote(newNote); err != nil {
+		g.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add note"})
+		return
+	}
 
-	h.db.Create(newNote)
+	g.JSON(http.StatusOK, newNote)
 
 }
 
@@ -43,11 +45,9 @@ func (h *Handler) UpdateNote(g *gin.Context) {
 
 	}
 
-	var note models.Note
-	h.db.Where("id = ? AND user_id = ?", noteId, userId).First(&note)
-
-	if note.ID == 0 {
-		g.JSON(http.StatusNotFound, gin.H{"err": "Note not found"})
+	note, err := h.db.GetNote(noteId, userId)
+	if err != nil {
+		g.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -57,17 +57,10 @@ func (h *Handler) UpdateNote(g *gin.Context) {
 		return
 	}
 
-	if updatedNote.Content != "" {
-		note.Content = updatedNote.Content
+	if err := h.db.UpdateNote(note, updatedNote); err != nil {
+		g.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
-
-	if updatedNote.Title != "" {
-		note.Content = updatedNote.Title
-	}
-
-	updatedNote.UpdatedAt = time.Now()
-
-	h.db.Save(&updatedNote)
 
 	g.JSON(http.StatusOK, note)
 }
@@ -85,15 +78,43 @@ func (h *Handler) DeleteNote(g *gin.Context) {
 		return
 	}
 
-	var note models.Note
-	h.db.Where("id = ? AND user_id = ?", noteId, userId).First(&note)
+	note, err := h.db.GetNote(noteId, userId)
+	if err != nil {
+		g.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	if note.ID == 0 {
 		g.JSON(http.StatusNotFound, gin.H{"err": "Note not found"})
 		return
 	}
 
-	h.db.Delete(&note)
-
 	g.JSON(http.StatusOK, nil)
+}
+
+func (h *Handler) LinkTagToNote(c *gin.Context) {
+	noteId := c.Param("note_id")
+	tagId := c.Param("tag_id")
+	userId, err := getUserIdFromToken(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to parse token"})
+	}
+
+	note, err := h.db.GetNote(noteId, userId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+	tag, err := h.db.GetTag(tagId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+
+	noteTag, err := h.db.LinkTagToNote(note, tag)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to link note and tag"})
+		return
+	}
+
+	c.JSON(http.StatusOK, noteTag)
+
 }

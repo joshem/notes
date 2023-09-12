@@ -14,7 +14,10 @@ func (h *Handler) CreateTag(g *gin.Context) {
 		return
 	}
 
-	h.db.Create(&newTag)
+	if err := h.db.AddTag(newTag); err != nil {
+		g.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add tag"})
+		return
+	}
 
 	g.JSON(http.StatusOK, newTag)
 }
@@ -23,10 +26,8 @@ func (h *Handler) CreateTag(g *gin.Context) {
 func (h *Handler) UpdateTag(g *gin.Context) {
 	tagId := g.Param("id")
 
-	var tag models.Tag
-	h.db.Where("id = ?", tagId).First(&tag)
-
-	if tag.Id == 0 {
+	old, err := h.db.GetTag(tagId)
+	if err != nil {
 		g.JSON(http.StatusNotFound, gin.H{"error": "Tag not found"})
 		return
 	}
@@ -37,9 +38,10 @@ func (h *Handler) UpdateTag(g *gin.Context) {
 		return
 	}
 
-	tag.Name = updated.Name
-
-	h.db.Save(&tag)
+	if err := h.db.UpdateTag(old, updated); err != nil {
+		g.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update"})
+		return
+	}
 
 	g.JSON(http.StatusOK, updated)
 }
@@ -48,15 +50,15 @@ func (h *Handler) UpdateTag(g *gin.Context) {
 func (h *Handler) DeleteTag(c *gin.Context) {
 	tagID := c.Param("id")
 
-	var tag models.Tag
-	h.db.Where("id = ?", tagID).First(&tag)
-
-	if tag.Id == 0 {
+	tag, err := h.db.GetTag(tagID)
+	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Tag not found"})
-		return
 	}
 
-	h.db.Delete(&tag)
+	if err := h.db.DeleteTag(tag); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete tag"})
+		return
+	}
 
 	// Return a success response
 	c.JSON(http.StatusNoContent, nil)

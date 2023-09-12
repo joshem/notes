@@ -1,10 +1,12 @@
 package routes
 
-import "gorm.io/gorm"
+import (
+	"notes/backend/models"
+)
 
 // Handler is the main structure to access all API calls within this package.
 type Handler struct {
-	db         *gorm.DB
+	db         models.Storage
 	privateKey []byte
 }
 

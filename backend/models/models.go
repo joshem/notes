@@ -17,3 +17,8 @@ type Tag struct {
 	Id   uint   `json:"id" gorm:"primary_key"`
 	Name string `json:"name"`
 }
+
+type NoteTag struct {
+	NoteId uint `json:"note_id" gorm:"primary_key"`
+	TagId  uint `json:"tag_id""`
+}
